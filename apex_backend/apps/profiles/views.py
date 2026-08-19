@@ -58,3 +58,34 @@ class AvailabilityToggleView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+from rest_framework.permissions import AllowAny
+from .serializers import MentorSerializer, MentorOrganizationSerializer
+from .models import Mentor, MentorOrganization
+
+
+class MentorListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        qs = Mentor.objects.select_related('user', 'organization').all().order_by('-consistency_score')
+        data = MentorSerializer(qs, many=True).data
+        return Response(data)
+
+
+class MentorOrgListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        qs = MentorOrganization.objects.all().order_by('name')
+        result = []
+        for org in qs:
+            mentors = Mentor.objects.filter(organization=org).select_related('user')
+            result.append({
+                'id': str(org.id),
+                'name': org.name,
+                'description': org.description,
+                'mentors': MentorSerializer(mentors, many=True).data,
+            })
+        return Response(result)

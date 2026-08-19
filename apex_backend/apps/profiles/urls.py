@@ -7,3 +7,10 @@ urlpatterns = [
     path('availability/', AvailabilityToggleView.as_view()),
     path('<uuid:user_id>/', PublicProfileView.as_view()),
 ]
+
+from .views import MentorListView, MentorOrgListView
+
+urlpatterns += [
+    path('mentors/', MentorListView.as_view()),
+    path('mentors/organizations/', MentorOrgListView.as_view()),
+]

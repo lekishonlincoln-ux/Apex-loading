@@ -1,18 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import MentorsOrganization from './MentorsOrganization'
-
-const SAMPLE_MENTORS = [
-  { id: 1, name: 'Aisha Kamau', tier: '1000 Kes', skills: ['Certification', 'Leadership'], consistencyScore: 92 },
-  { id: 2, name: 'Samuel Otieno', tier: '500 Kes', skills: ['Communication', 'Coaching'], consistencyScore: 76 },
-]
-
-const SAMPLE_ORGS = [
-  { id: 1, name: 'Mentor Collective', mentors: [SAMPLE_MENTORS[0]] },
-  { id: 2, name: 'Growth Hub', mentors: [SAMPLE_MENTORS[1]] },
-]
+import { listMentors, listMentorOrgs } from '../../api/mentorsAPI'
+import { useAuth } from '../../context/AuthContext'
 
 export default function MentorsTab() {
+  const { user } = useAuth()
   const [view, setView] = useState('mentors')
+  const [mentors, setMentors] = useState([])
+  const [orgs, setOrgs] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const [m, o] = await Promise.all([listMentors(), listMentorOrgs()])
+        if (!mounted) return
+        setMentors(m)
+        setOrgs(o)
+      } catch (e) {
+        console.error(e)
+      } finally { if (mounted) setLoading(false) }
+    }
+    fetch()
+    return () => { mounted = false }
+  }, [])
 
   return (
     <div>
@@ -26,12 +39,17 @@ export default function MentorsTab() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1rem' }}>
           <div>
             <h4>Active Mentors</h4>
-            {SAMPLE_MENTORS.map((m) => (
+            {loading && <div>Loading mentors…</div>}
+            {!loading && mentors.length === 0 && <div>No mentors found.</div>}
+            {!loading && mentors.map((m) => (
               <div key={m.id} style={{ padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                <strong>{m.name}</strong>
-                <div>Tier: {m.tier}</div>
-                <div>Consistency: {m.consistencyScore}%</div>
-                <div>Skills: {m.skills.join(', ')}</div>
+                <strong>{m.user?.username || m.user?.email || 'Unknown'}</strong>
+                <div>Tier: {m.tier || '—'}</div>
+                <div>Consistency: {m.consistency_score != null ? `${m.consistency_score.toFixed(1)}%` : '—'}</div>
+                <div>Skills: {(m.skills || []).join(', ')}</div>
+                {user?.role === 'admin' && (
+                  <div style={{ marginTop: '0.5rem' }}><small style={{ color: 'var(--color-muted)' }}>Admin view: organization — {m.organization?.name}</small></div>
+                )}
               </div>
             ))}
 
@@ -73,8 +91,9 @@ export default function MentorsTab() {
         <div>
           <h4>Mentoring Organizations</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
-            {SAMPLE_ORGS.map((org) => (
-              <MentorsOrganization key={org.id} org={org} />
+            {loading && <div>Loading…</div>}
+            {!loading && orgs.map((org) => (
+              <MentorsOrganization key={org.id} org={{ id: org.id, name: org.name, mentors: org.mentors || [] }} />
             ))}
           </div>
         </div>

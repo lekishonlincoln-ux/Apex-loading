@@ -38,3 +38,30 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+class MentorOrganization(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'mentor_organizations'
+
+
+class Mentor(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='mentor_profile')
+    organization = models.ForeignKey(MentorOrganization, on_delete=models.SET_NULL, null=True, blank=True, related_name='mentors')
+    bio = models.TextField(blank=True)
+    skills = models.JSONField(default=list)
+    tier = models.CharField(max_length=64, blank=True)
+    consistency_score = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'mentors'
+
+    def __str__(self):
+        return getattr(self.user, 'username', str(self.id))
