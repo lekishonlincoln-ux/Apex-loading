@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { login as loginApi } from '../../api/authAPI'
+import { getMe, login as loginApi } from '../../api/authAPI'
 import { useAuth } from '../../context/AuthContext'
 import { email, required } from '../../utils/validators'
 
@@ -13,10 +13,20 @@ export default function LoginForm() {
   const onSubmit = async (values) => {
     try {
       const { data } = await loginApi(values)
-      login({ access: data.access, refresh: data.refresh }, data.user)
-      navigate('/dashboard')
+      const tokens = {
+        access: data.access ?? data.accessToken ?? data.token ?? data.tokens?.access,
+        refresh: data.refresh ?? data.refreshToken ?? data.tokens?.refresh,
+      }
+      const user = data.user ?? data.profile ?? data.userData ?? data.data?.user ?? null
+      const resolvedUser = user ?? (tokens.access ? (await getMe()).data : null)
+
+      login(tokens, resolvedUser)
+      const isAdmin = resolvedUser?.is_admin === true || resolvedUser?.isAdmin === true || resolvedUser?.role === 'admin'
+      navigate(isAdmin ? '/admin' : '/dashboard')
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Login failed.')
+      const details = err.response?.data
+      const message = details?.error || details?.detail || (details && Object.values(details).flat().join(' ')) || 'Login failed.'
+      toast.error(message)
     }
   }
 

@@ -47,7 +47,7 @@ export default function MentorsTab() {
                 <div>Tier: {m.tier || '—'}</div>
                 <div>Consistency: {m.consistency_score != null ? `${m.consistency_score.toFixed(1)}%` : '—'}</div>
                 <div>Skills: {(m.skills || []).join(', ')}</div>
-                {user?.role === 'admin' && (
+                {(user?.is_admin || user?.role === 'admin') && (
                   <div style={{ marginTop: '0.5rem' }}><small style={{ color: 'var(--color-muted)' }}>Admin view: organization — {m.organization?.name}</small></div>
                 )}
               </div>

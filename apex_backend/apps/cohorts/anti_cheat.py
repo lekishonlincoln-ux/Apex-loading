@@ -5,9 +5,14 @@ Detection: tab switches, speed anomalies, uniform answer patterns, time anomalie
 
 from apps.cohorts.models import AssessmentAttempt
 
-MAX_TAB_SWITCHES = 3
-MIN_TIME_PER_QUESTION_SECONDS = 4
-SUSPICIOUS_UNIFORM_ANSWER_RATIO = 0.9
+MAX_TAB_SWITCHES = 5
+MIN_TIME_PER_QUESTION_SECONDS = 2
+SUSPICIOUS_UNIFORM_ANSWER_RATIO = 0.95
+MIN_ANSWERS_FOR_UNIFORM_PATTERN = 5
+
+
+def score_penalty(severity: str) -> int:
+    return {'low': 5, 'medium': 10, 'high': 20}.get(severity, 0)
 
 
 def analyze_attempt(attempt: AssessmentAttempt) -> dict:
@@ -28,7 +33,7 @@ def analyze_attempt(attempt: AssessmentAttempt) -> dict:
         if values:
             most_common = max(set(values), key=values.count)
             ratio = values.count(most_common) / len(values)
-            if ratio >= SUSPICIOUS_UNIFORM_ANSWER_RATIO:
+            if len(values) >= MIN_ANSWERS_FOR_UNIFORM_PATTERN and ratio >= SUSPICIOUS_UNIFORM_ANSWER_RATIO:
                 flags.append(f"Uniform answer pattern: {ratio*100:.0f}% same answer")
 
     if attempt.time_anomalies > 2:
@@ -59,7 +64,12 @@ def analyze_attempt(attempt: AssessmentAttempt) -> dict:
             },
         )
 
-    return {'flagged': is_flagged, 'reason': reason, 'severity': severity}
+    return {
+        'flagged': is_flagged,
+        'reason': reason,
+        'severity': severity,
+        'penalty_percent': score_penalty(severity),
+    }
 
 
 def flag_attempt(attempt_id: str):

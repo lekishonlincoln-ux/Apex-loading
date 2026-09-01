@@ -3,11 +3,30 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import NotificationBell from './NotificationBell'
 import { logout as logoutApi } from '../../api/authAPI'
+import { sendPresence } from '../../api/profileAPI'
+import { useEffect } from 'react'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const { dark, toggle } = useTheme()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!user) return undefined
+    const syncPresence = () => sendPresence(document.visibilityState === 'visible' && navigator.onLine).catch(() => {})
+    syncPresence()
+    const timer = window.setInterval(syncPresence, 30000)
+    window.addEventListener('online', syncPresence)
+    window.addEventListener('offline', syncPresence)
+    document.addEventListener('visibilitychange', syncPresence)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('online', syncPresence)
+      window.removeEventListener('offline', syncPresence)
+      document.removeEventListener('visibilitychange', syncPresence)
+      sendPresence(false).catch(() => {})
+    }
+  }, [user])
 
   const handleLogout = async () => {
     try {
@@ -46,11 +65,13 @@ export default function Navbar() {
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <Link to="/dashboard" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Dashboard</Link>
           <Link to="/mentors" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Mentors</Link>
+          <Link to="/teams" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Teams</Link>
+          <Link to="/communities" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Communities</Link>
           <Link to="/cohorts" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Cohorts</Link>
           <Link to="/opportunities" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Opportunities</Link>
           <Link to="/rankings" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Leaderboard</Link>
           {user.role === 'vendor' && <Link to="/vendor" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Vendor</Link>}
-          {user.role === 'admin' && <Link to="/admin" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Admin</Link>}
+          {user.is_admin === true && <Link to="/admin" style={{ color: '#dbeafe', textDecoration: 'none', fontWeight: 600 }}>Admin</Link>}
         </div>
       )}
 

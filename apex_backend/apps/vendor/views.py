@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q
 
 from .models import VendorJob, VendorRating
 from .serializers import VendorJobSerializer, VendorRatingSerializer
@@ -109,3 +109,17 @@ class VendorDashboardView(APIView):
                 vendor=request.user
             ).aggregate(avg=Avg('overall_score'))['avg'],
         })
+
+
+class ProfessionalOpportunityView(APIView):
+    def get(self, request):
+        jobs = VendorJob.objects.filter(status='open').order_by('-priority', '-created_at')
+        profession = request.query_params.get('profession')
+        skill = request.query_params.get('skill')
+        minimum_score = float(request.query_params.get('min_merit', 0) or 0)
+        if profession:
+            jobs = jobs.filter(profession_required__icontains=profession)
+        if skill:
+            jobs = jobs.filter(skills_required__icontains=skill)
+        jobs = jobs.filter(min_trust_score__gte=minimum_score)
+        return Response(VendorJobSerializer(jobs[:50], many=True).data)

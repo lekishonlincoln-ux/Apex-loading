@@ -14,6 +14,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs.pop('password2'):
             raise serializers.ValidationError({'password': 'Passwords do not match.'})
+        if attrs.get('role') == 'admin':
+            raise serializers.ValidationError({'role': 'Administrator accounts cannot be created through registration.'})
         return attrs
 
     def create(self, validated_data):
@@ -28,11 +30,16 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ('id', 'email', 'username', 'role', 'is_email_verified',
-                  'phone_number', 'created_at')
+                  'phone_number', 'created_at', 'is_admin')
         read_only_fields = ('id', 'is_email_verified', 'created_at')
+
+    def get_is_admin(self, user):
+        return user.is_admin
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

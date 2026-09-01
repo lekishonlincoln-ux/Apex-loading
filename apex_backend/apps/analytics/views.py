@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.db.models import Count, Avg, Sum
 from django.utils import timezone
 from datetime import timedelta
@@ -10,6 +11,8 @@ from apps.vendor.models import VendorJob, VendorRating
 from apps.escrow.models import EscrowPayment
 from apps.cohorts.models import AssessmentAttempt, CohortEnrollment
 from apps.trust_engine.models import TrustScore
+from apps.rankings.models import Ranking
+from apps.rankings.serializers import RankingSerializer
 
 
 class PlatformAnalyticsView(APIView):
@@ -34,6 +37,33 @@ class PlatformAnalyticsView(APIView):
                 row['tier']: row['count']
                 for row in TrustScore.objects.values('tier').annotate(count=Count('id'))
             },
+        })
+
+
+class PublicPlatformStatsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        total_jobs = VendorJob.objects.count()
+        completed_jobs = VendorJob.objects.filter(status='completed').count()
+        earned = EscrowPayment.objects.filter(status='released').aggregate(total=Sum('amount'))['total'] or 0
+        return Response({
+            'active_professionals': User.objects.filter(role='professional', is_active=True).count(),
+            'real_opportunities': total_jobs,
+            'successful_jobs_percent': round((completed_jobs / total_jobs) * 100) if total_jobs else 0,
+            'verified_vendors': User.objects.filter(role='vendor', is_active=True).count(),
+            'earned_amount': earned,
+            'currency': 'KES',
+            'average_merit_score': round(float(TrustScore.objects.aggregate(avg=Avg('overall_merit_score'))['avg'] or 0)),
+            'top_professionals': RankingSerializer(
+                Ranking.objects.select_related('user__profile', 'user__trust_score').order_by('global_rank')[:5],
+                many=True,
+            ).data,
+            'recent_opportunities': list(
+                VendorJob.objects.filter(status='open').order_by('-created_at').values(
+                    'id', 'title', 'profession_required', 'budget_max', 'currency', 'priority'
+                )[:3]
+            ),
         })
 
 

@@ -14,19 +14,32 @@ import OpportunityCenterPage from '../pages/OpportunityCenterPage'
 import NotificationsPage from '../pages/NotificationsPage'
 import ProfileSettingsPage from '../pages/ProfileSettingsPage'
 import AdminDashboardPage from '../pages/AdminDashboardPage'
-import MentorsPage from '../pages/MentorsPage'
+import MentorshipPage from '../pages/MentorshipPage'
+import TeamsPage from '../pages/TeamsPage'
+import CommunitiesPage from '../pages/CommunitiesPage'
+import { introWatched } from '../components/common/HowItWorksTabs'
+import { Navigate, useLocation } from 'react-router-dom'
+
+function IntroGate({ children }) {
+  const location = useLocation()
+  if (!introWatched()) return <Navigate to={`/?watch=1&next=${encodeURIComponent(location.pathname)}`} replace />
+  return children
+}
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/how-it-works" element={<Navigate to="/?watch=1" replace />} />
+        <Route path="/login" element={<IntroGate><LoginPage /></IntroGate>} />
+        <Route path="/register" element={<IntroGate><RegisterPage /></IntroGate>} />
 
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/mentors" element={<MentorsPage />} />
+          <Route path="/mentors" element={<MentorshipPage />} />
+          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/communities" element={<CommunitiesPage />} />
           <Route path="/cohorts" element={<CohortsPage />} />
           <Route path="/rankings" element={<RankingsPage />} />
           <Route path="/opportunities" element={<OpportunityCenterPage />} />

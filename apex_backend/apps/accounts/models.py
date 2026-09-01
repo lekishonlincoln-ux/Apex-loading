@@ -22,6 +22,10 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
+    @property
+    def is_admin(self):
+        return self.role == 'admin' or self.is_staff or self.is_superuser
+
     class Meta:
         db_table = 'users'
         indexes = [models.Index(fields=['email']), models.Index(fields=['role'])]

@@ -1,28 +1,35 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useEffect } from 'react'
 import Navbar from '../components/common/Navbar'
+import HowItWorksTabs, { WATCH_KEY } from '../components/common/HowItWorksTabs'
+import { getPublicPlatformStats } from '../api/analyticsAPI'
 
 export default function LandingPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const query = new URLSearchParams(location.search)
+  const [showHowItWorks, setShowHowItWorks] = useState(query.get('watch') === '1')
+  const nextPath = query.get('next') || '/register'
+  const [activeStory, setActiveStory] = useState('All')
+  const [likedStories, setLikedStories] = useState([])
+  const [platformStats, setPlatformStats] = useState(null)
+
+  useEffect(() => {
+    getPublicPlatformStats().then(({ data }) => setPlatformStats(data)).catch(() => {})
+  }, [])
+
   const stats = [
-    { icon: '👥', number: '25,000+', label: 'Active Professionals' },
-    { icon: '💼', number: '1,350+', label: 'Real Opportunities' },
-    { icon: '✅', number: '98%', label: 'Successful Jobs' },
-    { icon: '🏢', number: '520+', label: 'Verified Vendors' },
-    { icon: '💰', number: 'KES 32M+', label: 'Earned by Users' },
+    { icon: '👥', number: platformStats ? platformStats.active_professionals.toLocaleString() : '—', label: 'Active Professionals' },
+    { icon: '💼', number: platformStats ? platformStats.real_opportunities.toLocaleString() : '—', label: 'Real Opportunities' },
+    { icon: '✅', number: platformStats ? `${platformStats.successful_jobs_percent}%` : '—', label: 'Successful Jobs' },
+    { icon: '🏢', number: platformStats ? platformStats.verified_vendors.toLocaleString() : '—', label: 'Verified Vendors' },
+    { icon: '💰', number: platformStats ? `${platformStats.currency} ${Number(platformStats.earned_amount).toLocaleString()}` : '—', label: 'Earned by Users' },
   ]
 
-  const professionals = [
-    { rank: 1, name: 'Brian M.', role: 'Backend Developer', score: 9152 },
-    { rank: 2, name: 'Sharon N.', role: 'UI/UX Designer', score: 8742 },
-    { rank: 3, name: 'Ian M.', role: 'Mobile Developer', score: 8215 },
-    { rank: 4, name: 'Mercy A.', role: 'Product Designer', score: 7980 },
-    { rank: 5, name: 'Collins O.', role: 'DevOps Engineer', score: 7645 },
-  ]
+  const professionals = platformStats?.top_professionals?.map((person) => ({ rank: person.global_rank, name: person.full_name || 'Apex professional', role: person.profession, score: person.overall_merit_score })) || []
 
-  const opportunities = [
-    { title: 'Build a React Dashboard', tags: ['React', 'Tailwind', 'API Integration'], reward: 'KES 45,000', level: 'Intermediate' },
-    { title: 'Diagnose Car Engine Issue', tags: ['Node', 'Diagnostics', 'Hardware'], reward: 'KES 12,000', level: 'Advanced' },
-    { title: 'House Wiring Installation', tags: ['Electrical', 'Wiring', 'Safety'], reward: 'KES 18,000', level: 'Intermediate' },
-  ]
+  const opportunities = platformStats?.recent_opportunities?.map((opportunity) => ({ title: opportunity.title, tags: [opportunity.profession_required], reward: `${opportunity.currency} ${Number(opportunity.budget_max || 0).toLocaleString()}`, level: opportunity.priority })) || []
 
   const benefits = [
     { icon: '⭐', title: 'Merit Over Popularity', desc: 'Ranked by performance, not followers or reviews.' },
@@ -32,6 +39,12 @@ export default function LandingPage() {
   ]
 
   const chartBars = [28, 58, 42, 71, 60, 95, 86, 100, 78, 92, 110, 120]
+  const stories = [
+    { name: 'Amina Otieno', role: 'Robotics Technician', category: 'Deployment', image: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&w=900&q=85', quote: 'My cohort feedback became a real factory deployment within one month.', likes: 184, comments: 26 },
+    { name: 'David Mwangi', role: 'Software Engineer', category: 'Mentorship', image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=85', quote: 'The consistency coach helped me turn missed milestones into a system I can trust.', likes: 241, comments: 38 },
+    { name: 'Wanjiku Njeri', role: 'Product Designer', category: 'Certification', image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=85', quote: 'I stopped presenting potential and started showing verified capability.', likes: 319, comments: 44 },
+  ]
+  const visibleStories = activeStory === 'All' ? stories : stories.filter((story) => story.category === activeStory)
 
   return (
     <>
@@ -53,8 +66,8 @@ export default function LandingPage() {
               </p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
-                <Link to="/register"><button style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: '#fff', borderRadius: '0.85rem', padding: '0.9rem 1.7rem', fontSize: '1rem', fontWeight: 700, boxShadow: '0 12px 28px rgba(124, 58, 237, 0.4)' }}>Join Apex Now →</button></Link>
-                <button style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '0.85rem', padding: '0.9rem 1.7rem', fontSize: '1rem', fontWeight: 700 }}>Watch How It Works</button>
+                <button onClick={() => { setShowHowItWorks(true); navigate('/?watch=1&next=/register') }} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', color: '#fff', borderRadius: '0.85rem', padding: '0.9rem 1.7rem', fontSize: '1rem', fontWeight: 700, boxShadow: '0 12px 28px rgba(124, 58, 237, 0.4)' }}>Join Apex Now →</button>
+                <button onClick={() => { setShowHowItWorks(true); navigate('/?watch=1&next=/register') }} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '0.85rem', padding: '0.9rem 1.7rem', fontSize: '1rem', fontWeight: 700 }}>Watch How It Works</button>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
@@ -63,17 +76,17 @@ export default function LandingPage() {
                     <div key={item} style={{ width: '38px', height: '38px', borderRadius: '50%', marginLeft: item === 1 ? 0 : '-10px', background: 'linear-gradient(135deg, #c4b5fd, #8b5cf6)', border: '2px solid #0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '0.76rem' }}>A</div>
                   ))}
                 </div>
-                <span style={{ color: '#dbeafe', fontSize: '0.96rem' }}><strong>25,000+</strong> professionals already building credibility and earning opportunities.</span>
+                <span style={{ color: '#dbeafe', fontSize: '0.96rem' }}><strong>{platformStats ? platformStats.active_professionals.toLocaleString() : '—'}</strong> professionals building credibility and earning opportunities.</span>
               </div>
             </div>
 
             <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(167, 139, 250, 0.25)', borderRadius: '1.5rem', padding: '1.2rem', boxShadow: '0 32px 80px rgba(2,6,23,0.5)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                  <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #c4b5fd, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff' }}>KW</div>
+                  <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg, #c4b5fd, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff' }}>AX</div>
                   <div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>Kelvin W.</div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>Backend Developer</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>Apex Network</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>Live platform performance</div>
                   </div>
                 </div>
                 <span style={{ background: 'rgba(34,197,94,0.18)', color: '#86efac', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '999px', padding: '0.35rem 0.75rem', fontSize: '0.72rem', fontWeight: 700 }}>Active</span>
@@ -81,7 +94,7 @@ export default function LandingPage() {
 
               <div style={{ marginBottom: '1rem' }}>
                 <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '0.25rem' }}>Merit Score</div>
-                <div style={{ fontSize: '2.7rem', fontWeight: 900, letterSpacing: '-0.05em' }}>7,842 <span style={{ fontSize: '1rem', color: '#4ade80', marginLeft: '0.3rem' }}>↑ 128</span></div>
+                <div style={{ fontSize: '2.7rem', fontWeight: 900, letterSpacing: '-0.05em' }}>{platformStats ? platformStats.average_merit_score.toLocaleString() : '—'} <span style={{ fontSize: '1rem', color: '#4ade80', marginLeft: '0.3rem' }}>average merit</span></div>
               </div>
 
               <div style={{ display: 'flex', height: '70px', alignItems: 'flex-end', gap: '0.35rem', marginBottom: '1rem' }}>
@@ -162,6 +175,22 @@ export default function LandingPage() {
         </section>
 
         <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <div><div style={{ color: '#4ade80', fontSize: '0.75rem', letterSpacing: '0.15em', fontWeight: 800 }}>LIVE CAPABILITY STORIES</div><h2 style={{ fontSize: '2rem', marginTop: '0.35rem' }}>Proof from the network</h2><p style={{ marginTop: '0.35rem' }}>Real progress, shared by Business Nodes as capability turns into opportunity.</p></div>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>{['All', 'Deployment', 'Mentorship', 'Certification'].map((filter) => <button key={filter} onClick={() => setActiveStory(filter)} style={{ background: activeStory === filter ? '#22c55e' : 'rgba(148,163,184,0.12)', color: activeStory === filter ? '#04111f' : '#dbeafe', padding: '0.45rem 0.75rem' }}>{filter}</button>)}</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+            {visibleStories.map((story) => {
+              const liked = likedStories.includes(story.name)
+              return <article key={story.name} style={{ overflow: 'hidden', background: 'rgba(15,23,42,0.82)', border: '1px solid rgba(148,163,184,0.14)', borderRadius: '1rem' }}>
+                <img src={story.image} alt={`${story.name} success story`} style={{ width: '100%', height: '190px', objectFit: 'cover', display: 'block' }} />
+                <div style={{ padding: '1rem' }}><div style={{ color: '#86efac', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>{story.category}</div><h3 style={{ margin: '0.35rem 0 0.1rem' }}>{story.name}</h3><div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>{story.role}</div><p style={{ color: '#e2e8f0', lineHeight: 1.55, margin: '0.8rem 0' }}>“{story.quote}”</p><div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => setLikedStories((current) => liked ? current.filter((name) => name !== story.name) : [...current, story.name])} style={{ background: liked ? 'rgba(244,63,94,0.18)' : 'rgba(148,163,184,0.1)', color: liked ? '#fb7185' : '#cbd5e1', padding: '0.4rem 0.65rem' }}>{liked ? '♥' : '♡'} {story.likes + (liked ? 1 : 0)}</button><button style={{ background: 'rgba(148,163,184,0.1)', color: '#cbd5e1', padding: '0.4rem 0.65rem' }}>◌ {story.comments}</button><Link to="/register" style={{ marginLeft: 'auto', padding: '0.4rem 0.2rem', fontWeight: 700 }}>Build yours →</Link></div></div>
+              </article>
+            })}
+          </div>
+        </section>
+
+        <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem 4rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             {benefits.map((benefit) => (
               <div key={benefit.title} style={{ background: 'rgba(15,23,42,0.78)', border: '1px solid rgba(148,163,184,0.12)', borderRadius: '1rem', padding: '1.3rem' }}>
@@ -173,6 +202,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+      {showHowItWorks && <HowItWorksTabs nextPath={nextPath} required={query.get('watch') === '1' || !localStorage.getItem(WATCH_KEY)} onClose={() => { setShowHowItWorks(false); navigate('/') }} />}
     </>
   )
 }

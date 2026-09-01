@@ -3,6 +3,15 @@ import { getMe } from '../api/authAPI'
 
 const AuthContext = createContext(null)
 
+const normalizeTokens = (tokens) => {
+  if (!tokens || typeof tokens !== 'object') return { access: '', refresh: '' }
+
+  return {
+    access: tokens.access ?? tokens.accessToken ?? tokens.access_token ?? tokens.token ?? '',
+    refresh: tokens.refresh ?? tokens.refreshToken ?? tokens.refresh_token ?? '',
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -15,6 +24,7 @@ export function AuthProvider({ children }) {
       setUser(data)
     } catch {
       localStorage.clear()
+      setUser(null)
     } finally {
       setLoading(false)
     }
@@ -23,9 +33,16 @@ export function AuthProvider({ children }) {
   useEffect(() => { loadUser() }, [loadUser])
 
   const login = (tokens, userData) => {
-    localStorage.setItem('access_token', tokens.access)
-    localStorage.setItem('refresh_token', tokens.refresh)
-    setUser(userData)
+    const normalizedTokens = normalizeTokens(tokens)
+
+    if (normalizedTokens.access) {
+      localStorage.setItem('access_token', normalizedTokens.access)
+    }
+    if (normalizedTokens.refresh) {
+      localStorage.setItem('refresh_token', normalizedTokens.refresh)
+    }
+
+    setUser(userData ?? null)
   }
 
   const logout = () => {

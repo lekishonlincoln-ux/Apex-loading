@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
-export default function AssessmentTimer({ limitMinutes, onExpire }) {
-  const [remaining, setRemaining] = useState(limitMinutes * 60)
+export default function AssessmentTimer({ limitMinutes, startedAt, onExpire }) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((new Date(startedAt).getTime() + limitMinutes * 60000 - Date.now()) / 1000)))
 
   useEffect(() => {
     const id = setInterval(() => {

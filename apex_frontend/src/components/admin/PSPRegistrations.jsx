@@ -46,7 +46,7 @@ export default function PSPRegistrations() {
           <button onClick={fetch} className="btn-outline">Search</button>
         </div>
 
-        <h4>PSP Registrations (Pending)</h4>
+        <h4>PSP Registrations (Till 1598106)</h4>
         {loading && <div>Loading...</div>}
         {!loading && registrations.length === 0 && <div>No registrations found.</div>}
         {!loading && registrations.map((r) => (

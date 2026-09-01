@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 import uuid
 
 from .models import Profile
@@ -11,20 +12,30 @@ from .serializers import ProfileSerializer, PublicProfileSerializer, Availabilit
 from utils.cloudinary_upload import upload_avatar
 
 
+def get_or_create_profile(user):
+    return Profile.objects.get_or_create(
+        user=user,
+        defaults={
+            'full_name': user.get_full_name() or user.username,
+            'profession': '',
+        },
+    )
+
+
 class MyProfileView(APIView):
     def get(self, request):
-        profile = get_object_or_404(Profile, user=request.user)
+        profile, _ = get_or_create_profile(request.user)
         return Response(ProfileSerializer(profile).data)
 
     def put(self, request):
-        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile, _ = get_or_create_profile(request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=False)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def patch(self, request):
-        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile, _ = get_or_create_profile(request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -45,7 +56,9 @@ class AvatarUploadView(APIView):
         if not file:
             return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
         url = upload_avatar(file, str(request.user.id))
-        profile, _ = Profile.objects.get_or_create(user=request.user)
+        if url.startswith('/'):
+            url = request.build_absolute_uri(url)
+        profile, _ = get_or_create_profile(request.user)
         profile.avatar_url = url
         profile.save(update_fields=['avatar_url'])
         return Response({'avatar_url': url})
@@ -58,6 +71,15 @@ class AvailabilityToggleView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class PresenceHeartbeatView(APIView):
+    def post(self, request):
+        profile, _ = get_or_create_profile(request.user)
+        profile.is_online = bool(request.data.get('online', True))
+        profile.last_seen_at = timezone.now()
+        profile.save(update_fields=['is_online', 'last_seen_at', 'updated_at'])
+        return Response({'is_online': profile.is_online, 'last_seen_at': profile.last_seen_at})
 
 
 from rest_framework.permissions import AllowAny

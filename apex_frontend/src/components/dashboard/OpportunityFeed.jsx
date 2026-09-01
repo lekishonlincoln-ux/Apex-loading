@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
-import api from '../../api/axiosInstance'
+import { getProfessionalOpportunities } from '../../api/vendorAPI'
 import { formatDate, formatCurrency } from '../../utils/formatters'
 import LoadingSpinner from '../common/LoadingSpinner'
 
-export default function OpportunityFeed() {
+export default function OpportunityFeed({ filters = {} }) {
   const [opportunities, setOpportunities] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/opportunities/').then(({ data }) => setOpportunities(data.results || data)).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+    getProfessionalOpportunities(filters).then(({ data }) => setOpportunities(data.results || data)).catch(() => {}).finally(() => setLoading(false))
+  }, [filters.profession, filters.skill, filters.min_merit])
 
   if (loading) return <LoadingSpinner />
 
