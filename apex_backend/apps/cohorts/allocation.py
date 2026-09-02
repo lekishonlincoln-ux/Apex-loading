@@ -24,6 +24,10 @@ def get_reward_plan(participant_count):
     raise ValueError('At least 20 active participants are required before rewards can be allocated.')
 
 
+def get_tier_amount(payment_tier):
+    return {'10kes': Decimal('10'), '100kes': Decimal('100'), '1000kes': Decimal('1000')}[payment_tier]
+
+
 @transaction.atomic
 def allocate_cohort_rewards(cohort_id):
     cohort = Cohort.objects.select_for_update().get(id=cohort_id)
@@ -65,10 +69,11 @@ def allocate_cohort_rewards(cohort_id):
     for row in performance[skills_count + consistency_count:skills_count + consistency_count + improvement_count]:
         selected.append(('improvement', row))
 
+    tier_amount = get_tier_amount(cohort.payment_tier)
     payout_by_role = {
-        'skills': reward_plan['skills_payout'],
-        'consistency': reward_plan['consistency_payout'],
-        'improvement': reward_plan['improvement_payout'],
+        'skills': tier_amount,
+        'consistency': tier_amount,
+        'improvement': tier_amount,
     }
     thresholds = {'skills': 70, 'consistency': 70, 'improvement': 5}
     for role, row in selected:
@@ -102,7 +107,7 @@ def allocate_cohort_rewards(cohort_id):
         Decimal('0'),
     )
     mentor_total = sum((payout_by_role[role] for role, row in selected if CohortCoachAssignment.objects.filter(cohort=cohort, user_id=row['user_id'], role=role, eligibility_status='valid').exists()), Decimal('0'))
-    marketing = reward_plan['marketing']
+    marketing = tier_amount * Decimal(str(participant_count)) / Decimal('10')
     admin_remainder = total_received - mentor_total - marketing
     if admin_remainder < 0:
         raise ValueError('Configured payouts exceed verified cohort receipts.')
@@ -132,6 +137,8 @@ def allocate_cohort_rewards(cohort_id):
             'consistency': payout_by_role['consistency'],
             'improvement': payout_by_role['improvement'],
         },
+        'payment_tier': cohort.payment_tier,
+        'tier_amount': tier_amount,
         'total_received': total_received,
         'mentor_total': mentor_total,
         'marketing': marketing,
