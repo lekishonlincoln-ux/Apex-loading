@@ -17,3 +17,5 @@ export const runMentorshipFollowUp = (cohortId) =>
   api.post(`/cohorts/admin/${cohortId}/mentorship-follow-up/`)
 export const listWhatsAppInvites = () => api.get('/cohorts/mentorship/whatsapp-invites/')
 export const requestWhatsAppInvite = (payload) => api.post('/cohorts/mentorship/whatsapp-invites/', payload)
+export const requestCoachPayout = () => api.post('/cohorts/coach-payouts/')
+export const updateCoachPayoutDetails = (assignmentId, payload) => api.patch(`/cohorts/coach-payouts/${assignmentId}/`, payload)

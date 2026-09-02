@@ -335,6 +335,19 @@ class AllocateCohortRewardsView(APIView):
 class CoachPayoutView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        assignments = CohortCoachAssignment.objects.filter(
+            user=request.user,
+            eligibility_status='valid',
+            payout_amount__gt=0,
+        ).select_related('cohort').order_by('-allocated_at')
+        if not assignments.exists():
+            return Response(
+                {'error': 'You are not qualified for a coach payout. Complete a cohort and meet the selection criteria first.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response(CoachPayoutSerializer(assignments, many=True).data)
+
     def get(self, request):
         assignments = CohortCoachAssignment.objects.filter(
             user=request.user,
