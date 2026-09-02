@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from .models import Notification
@@ -33,3 +34,26 @@ class UnreadCountView(APIView):
     def get(self, request):
         count = Notification.objects.filter(user=request.user, is_read=False).count()
         return Response({'unread_count': count})
+
+
+class ActivityNotificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        title = str(request.data.get('title', '')).strip()
+        message = str(request.data.get('message', '')).strip()
+        if not title or not message:
+            return Response({'error': 'Notification title and message are required.'}, status=400)
+        notification_type = request.data.get('notification_type', 'system')
+        allowed_types = {choice[0] for choice in Notification.TYPE_CHOICES}
+        if notification_type not in allowed_types:
+            notification_type = 'system'
+        notification = Notification.objects.create(
+            user=request.user,
+            notification_type=notification_type,
+            title=title,
+            message=message,
+            action_url=str(request.data.get('action_url', '')).strip(),
+            metadata=request.data.get('metadata') or {},
+        )
+        return Response(NotificationSerializer(notification).data, status=201)

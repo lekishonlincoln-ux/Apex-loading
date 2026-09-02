@@ -3,6 +3,7 @@ import Navbar from '../components/common/Navbar'
 import { useAuth } from '../context/AuthContext'
 import { getCohorts, allocateCohortRewards, listWhatsAppInvites, requestWhatsAppInvite, runMentorshipFollowUp } from '../api/cohortAPI'
 import toast from 'react-hot-toast'
+import { createActivityNotification } from '../api/notificationAPI'
 
 const coaches = [
   { name: 'Skills Coach', color: '#a78bfa', focus: 'Technical expertise, industry knowledge, AI & robotics, problem solving, certifications.', outcome: 'Better technical capability.' },
@@ -109,7 +110,7 @@ export default function MentorshipPage() {
             <h3 style={{ margin: '0.45rem 0' }}>Skills Coach · Zoom review</h3>
             <p style={{ color: 'var(--color-text-muted)', margin: '0.35rem 0' }}>Thursday, 7:00 PM EAT · 45 minutes</p>
             <p style={{ color: 'var(--color-text-muted)' }}>Assessment feedback, technical capability gaps, and the next certification recommendation.</p>
-            <button className="btn-outline" onClick={() => toast.success('Zoom reminder scheduled for Thursday at 7:00 PM EAT.')}>Schedule Zoom reminder</button>
+            <button className="btn-outline" onClick={() => { createActivityNotification({ title: 'Zoom reminder scheduled', message: 'Your Skills Coach Zoom review is scheduled for Thursday at 7:00 PM EAT.', action_url: '/mentors', metadata: { event: 'zoom_reminder' } }).catch(() => {}); toast.success('Zoom reminder scheduled for Thursday at 7:00 PM EAT.') }}>Schedule Zoom reminder</button>
           </article>
           <article className="card" style={{ borderTop: '3px solid #25d366' }}>
             <div style={{ color: '#25d366', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 800 }}>Mentorship community</div>
