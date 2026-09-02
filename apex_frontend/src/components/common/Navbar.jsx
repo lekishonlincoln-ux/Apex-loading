@@ -46,7 +46,7 @@ export default function Navbar() {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       height: '72px', boxShadow: '0 8px 20px rgba(2, 6, 23, 0.12)',
     }}>
-      <Link to="/" style={{ fontWeight: 900, fontSize: '1.5rem', color: '#f3e8ff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+      <Link to="/" aria-label="Return to Apex home" style={{ fontWeight: 900, fontSize: '1.5rem', color: '#f3e8ff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '8px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', fontSize: '0.9rem' }}>A</span>
         APEX 1.0
       </Link>
