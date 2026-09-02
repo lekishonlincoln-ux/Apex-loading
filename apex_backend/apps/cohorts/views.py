@@ -224,13 +224,14 @@ class SubmitAssessmentView(APIView):
         # notify the user that mentorship is available (all participants are eligible to request mentorship)
         try:
             from apps.notifications.utils import send_notification
+            amount = PSPRegistration.PSP_TIER_AMOUNTS.get(attempt.cohort.payment_tier, 0)
             send_notification(
                 user=request.user,
                 notification_type='system',
                 title='Mentorship available',
-                message='Thank you for completing the assessment. Mentorship is available to help you improve — visit the Mentorship page to request a coach. Coach payouts are only awarded to selected coaches after cohort allocation.',
+                message=f'Your participation has been recorded. To join another {attempt.cohort.get_payment_tier_display()} cohort, pay KES {amount} to Till {PSPRegistration.PAYMENT_TILL_NUMBER}. Mentorship is open to everyone; coaching tracks and payouts are reserved for participants selected through the completed cohort results.',
                 action_url='/mentorship',
-                metadata={'cohort_id': str(attempt.cohort.id), 'score': score},
+                metadata={'cohort_id': str(attempt.cohort.id), 'score': score, 'payment_till': PSPRegistration.PAYMENT_TILL_NUMBER, 'payment_amount': str(amount)},
             )
         except Exception:
             pass
@@ -333,11 +334,21 @@ class CoachPayoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        assignments = CohortCoachAssignment.objects.filter(user=request.user).select_related('cohort').order_by('-allocated_at')
+        assignments = CohortCoachAssignment.objects.filter(
+            user=request.user,
+            eligibility_status='valid',
+            payout_amount__gt=0,
+        ).select_related('cohort').order_by('-allocated_at')
         return Response(CoachPayoutSerializer(assignments, many=True).data)
 
     def patch(self, request, assignment_id):
-        assignment = get_object_or_404(CohortCoachAssignment, id=assignment_id, user=request.user)
+        assignment = get_object_or_404(
+            CohortCoachAssignment,
+            id=assignment_id,
+            user=request.user,
+            eligibility_status='valid',
+            payout_amount__gt=0,
+        )
         serializer = CoachPayoutSerializer(assignment, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         assignment = serializer.save(
