@@ -5,6 +5,7 @@ from apps.accounts.models import User
 
 class Cohort(models.Model):
     STATUS_CHOICES = [('open', 'Open'), ('in_progress', 'In Progress'), ('closed', 'Closed')]
+    LEVEL_CHOICES = [('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('advanced', 'Advanced')]
     PAYMENT_TIER_CHOICES = [
         ('10kes', 'KES 10'),
         ('100kes', 'KES 100'),
@@ -19,6 +20,7 @@ class Cohort(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     profession = models.CharField(max_length=100, db_index=True)
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='beginner', db_index=True)
     payment_tier = models.CharField(max_length=10, choices=PAYMENT_TIER_CHOICES, db_index=True, default='100kes')
     description = models.TextField(blank=True)
     start_date = models.DateTimeField()

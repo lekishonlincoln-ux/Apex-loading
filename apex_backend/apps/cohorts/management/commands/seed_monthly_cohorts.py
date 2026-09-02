@@ -10,6 +10,41 @@ LOCAL_VIDEO_BASE = '/static/videos/video_'
 
 # profession -> question templates that are contextual to the video/story
 QUESTION_TEMPLATES_BY_PROFESSION = {
+    'backend_engineer': [
+        'Which API boundary should own the validation described in the video?',
+        'What database or service failure caused the backend incident in the video?',
+        'Which caching or queue strategy best improves the service shown?',
+        'What security control should be added to the endpoint demonstrated?',
+        'Which observability signal best confirms the backend fix worked?',
+    ],
+    'cybersecurity': [
+        'Which attack signal was the strongest indicator in the incident shown?',
+        'What containment step should happen first in the response described?',
+        'Which access-control weakness enabled the breach in the video?',
+        'What evidence should an analyst preserve before remediation?',
+        'Which control best reduces the risk demonstrated in the scenario?',
+    ],
+    'frontend_engineer': [
+        'Which browser performance issue was demonstrated in the video?',
+        'What component boundary best addresses the interface problem shown?',
+        'Which accessibility improvement should be made first?',
+        'What state-management choice prevents the UI failure demonstrated?',
+        'Which test best protects the frontend behavior shown?',
+    ],
+    'data_engineer': [
+        'Which pipeline stage caused the data quality issue described?',
+        'What schema or validation rule would prevent the failure shown?',
+        'Which orchestration step should be retried in the scenario?',
+        'What partitioning choice best improves the data job demonstrated?',
+        'Which monitoring signal confirms the pipeline is healthy?',
+    ],
+    'qa_engineer': [
+        'Which test case best reproduces the defect shown in the video?',
+        'What acceptance criterion is missing from the scenario?',
+        'Which test level should catch the failure described?',
+        'What evidence should be included in the defect report?',
+        'Which regression test best prevents the issue from returning?',
+    ],
     'software_engineer': [
         'After watching the video, what was the root cause of the failure described?',
         'Which sequence of steps from the video would best reproduce the issue?',
@@ -70,20 +105,26 @@ class Command(BaseCommand):
         now = timezone.now()
 
         # choose professions from existing profiles, fallback to sample set
-        professions_qs = Profile.objects.values_list('profession', flat=True).distinct()[:20]
-        professions = list(professions_qs) if professions_qs else ['software_engineer', 'data_scientist', 'product_manager', 'designer', 'devops']
+        professions = [
+            'backend_engineer', 'cybersecurity', 'frontend_engineer',
+            'data_engineer', 'devops', 'qa_engineer',
+        ]
+        levels = ('beginner', 'intermediate', 'advanced')
 
         created = 0
         for i in range(count):
-            prof = random.choice(professions)
+            prof = professions[i % len(professions)]
+            level = levels[(i // len(professions)) % len(levels)]
             title = f"Monthly Cohort #{i+1} — {prof}"
             start = now + timedelta(days=start_offset + (i % 30))
             end = start + timedelta(days=7)  # cohort active for a week
 
+            payment_tier = ('10kes', '100kes', '1000kes')[i % 3]
             cohort = Cohort.objects.create(
                 title=title,
                 profession=prof,
-                payment_tier='100kes',
+                level=level,
+                payment_tier=payment_tier,
                 description=f'Auto-generated {prof} learning session with a guided video lesson and assessment.',
                 start_date=start,
                 end_date=end,

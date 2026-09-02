@@ -27,7 +27,7 @@ class CohortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cohort
         fields = (
-            'id', 'title', 'profession', 'payment_tier', 'description', 'start_date',
+            'id', 'title', 'profession', 'level', 'payment_tier', 'description', 'start_date',
             'end_date', 'max_participants', 'assessment_unlock_threshold', 'status',
             'participant_count', 'skills_coach_payout', 'consistency_coach_payout',
             'improvement_coach_payout', 'account_based_marketing_budget', 'created_at',
