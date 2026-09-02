@@ -10,10 +10,10 @@ MEDIA_DIR = os.path.join(os.path.dirname(settings.BASE_DIR), 'apex_backend', 'st
 PLACEHOLDER = os.path.join(MEDIA_DIR, 'placeholder.mp4')
 
 class Command(BaseCommand):
-    help = 'Create month video files by copying a placeholder and updating Assessment.video_url for assessments lacking a video.'
+    help = 'Create local lesson videos from the bundled source clip and link them to assessments.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--count', type=int, default=180, help='Number of videos to ensure exist; defaults to 180')
+        parser.add_argument('--count', type=int, default=180, help='Number of local lesson videos to create; defaults to 180')
 
     def handle(self, *args, **options):
         count = options['count']
@@ -22,17 +22,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'Placeholder not found at {PLACEHOLDER}'))
             return
 
-        assessments = Assessment.objects.filter(video_url__isnull=True)[:count]
+        assessments = Assessment.objects.order_by('created_at', 'id')[:count]
         created = 0
         i = 1
         for assessment in assessments:
             dest = os.path.join(MEDIA_DIR, f'video_{i}.mp4')
-            # find a free index
-            while os.path.exists(dest):
-                i += 1
-                dest = os.path.join(MEDIA_DIR, f'video_{i}.mp4')
             shutil.copyfile(PLACEHOLDER, dest)
-            # set a static path so frontend can access via /static/videos/video_X.mp4
+            # Keep every assessment on a stable local URL that works without a CDN.
             assessment.video_url = f'/static/videos/video_{i}.mp4'
             assessment.save(update_fields=['video_url'])
             created += 1

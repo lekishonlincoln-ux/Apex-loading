@@ -6,7 +6,7 @@ import random
 from apps.cohorts.models import Cohort, Assessment, Question
 from apps.profiles.models import Profile
 
-PLACEHOLDER_VIDEO_BASE = 'https://cdn.nano-banana-studio.example/videos'
+LOCAL_VIDEO_BASE = '/static/videos/video_'
 
 # profession -> question templates that are contextual to the video/story
 QUESTION_TEMPLATES_BY_PROFESSION = {
@@ -84,18 +84,18 @@ class Command(BaseCommand):
                 title=title,
                 profession=prof,
                 payment_tier='100kes',
-                description=f'Auto-generated cohort for {prof}',
+                description=f'Auto-generated {prof} learning session with a guided video lesson and assessment.',
                 start_date=start,
                 end_date=end,
                 max_participants=100,
             )
 
-            # create assessment with a placeholder video and short time limit (<=7 minutes)
+            # The local video generator materializes video_{i + 1}.mp4 from the bundled lesson clip.
             assessment = Assessment.objects.create(
                 cohort=cohort,
                 title=f'Assessment for {title}',
                 instructions='Watch the short video then answer the 5 questions.',
-                video_url=f"{PLACEHOLDER_VIDEO_BASE}/video_{i+1}.mp4",
+                video_url=f"{LOCAL_VIDEO_BASE}{i + 1}.mp4",
                 time_limit_minutes=7,
                 difficulty='medium',
                 passing_score=60.0,
