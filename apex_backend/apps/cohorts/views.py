@@ -221,6 +221,20 @@ class SubmitAssessmentView(APIView):
             # do not fail grading if assignment creation fails
             pass
 
+        # notify the user that mentorship is available (all participants are eligible to request mentorship)
+        try:
+            from apps.notifications.utils import send_notification
+            send_notification(
+                user=request.user,
+                notification_type='system',
+                title='Mentorship available',
+                message='Thank you for completing the assessment. Mentorship is available to help you improve — visit the Mentorship page to request a coach. Coach payouts are only awarded to selected coaches after cohort allocation.',
+                action_url='/mentorship',
+                metadata={'cohort_id': str(attempt.cohort.id), 'score': score},
+            )
+        except Exception:
+            pass
+
         recalculate_trust_score(request.user, reason='Assessment completed')
 
         return Response({
