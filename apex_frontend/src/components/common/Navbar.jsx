@@ -96,7 +96,7 @@ export default function Navbar() {
               <option>SW</option>
             </select>
             <Link to="/login"><button style={{ background: 'transparent', color: '#dbeafe', border: '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '0.7rem', padding: '0.55rem 1rem', fontWeight: 700 }}>Login</button></Link>
-            <Link to="/register"><button className="btn-primary" style={{ padding: '0.6rem 1.2rem', fontWeight: 800 }}>Join Apex</button></Link>
+            <Link to="/?watch=1&next=/register"><button className="btn-primary" style={{ padding: '0.6rem 1.2rem', fontWeight: 800 }}>Join Apex</button></Link>
           </>
         )}
       </div>

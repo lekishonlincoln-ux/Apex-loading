@@ -22,6 +22,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
 class CohortSerializer(serializers.ModelSerializer):
     participant_count = serializers.SerializerMethodField()
+    default_assessment_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Cohort
@@ -30,10 +31,15 @@ class CohortSerializer(serializers.ModelSerializer):
             'end_date', 'max_participants', 'assessment_unlock_threshold', 'status',
             'participant_count', 'skills_coach_payout', 'consistency_coach_payout',
             'improvement_coach_payout', 'account_based_marketing_budget', 'created_at',
+            'default_assessment_id',
         )
 
     def get_participant_count(self, obj):
         return obj.enrollments.count()
+
+    def get_default_assessment_id(self, obj):
+        assessment = obj.assessments.filter(is_active=True).order_by('created_at').first()
+        return str(assessment.id) if assessment else None
 
 
 class AssessmentAttemptSerializer(serializers.ModelSerializer):

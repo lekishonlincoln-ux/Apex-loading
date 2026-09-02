@@ -23,6 +23,8 @@ from .allocation import allocate_cohort_rewards
 
 class CohortListView(APIView):
     def get(self, request):
+        if not request.user.is_admin:
+            return DailyAvailableCohortsView().get(request)
         cohorts = Cohort.objects.filter(status='open')
         return Response(CohortSerializer(cohorts, many=True).data)
 
