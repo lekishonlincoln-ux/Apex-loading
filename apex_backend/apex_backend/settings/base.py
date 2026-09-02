@@ -179,5 +179,10 @@ MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
 MPESA_CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', '')
 MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')
 
+# WhatsApp Cloud API. Leave unset to keep in-app notifications only.
+WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN', '')
+WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID', '')
+WHATSAPP_API_VERSION = os.environ.get('WHATSAPP_API_VERSION', 'v20.0')
+
 PLATFORM_FEE_PERCENT = float(os.environ.get('PLATFORM_FEE_PERCENT', 10))
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')

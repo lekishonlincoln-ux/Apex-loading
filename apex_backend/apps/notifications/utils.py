@@ -33,4 +33,11 @@ def send_notification(user, notification_type: str, title: str, message: str,
         )
     except Exception:
         pass  # WebSocket push is best-effort
+
+    # WhatsApp delivery is best-effort; the in-app notification remains canonical.
+    try:
+        from utils.whatsapp_service import send_whatsapp
+        send_whatsapp(getattr(user, 'phone_number', '') or '', f'{title}\n\n{message}')
+    except Exception:
+        pass
     return notif

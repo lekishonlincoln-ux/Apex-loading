@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from .models import Notification
+from .utils import send_notification
 from .serializers import NotificationSerializer
 from utils.pagination import StandardResultsPagination
 
@@ -48,7 +49,7 @@ class ActivityNotificationView(APIView):
         allowed_types = {choice[0] for choice in Notification.TYPE_CHOICES}
         if notification_type not in allowed_types:
             notification_type = 'system'
-        notification = Notification.objects.create(
+        notification = send_notification(
             user=request.user,
             notification_type=notification_type,
             title=title,
