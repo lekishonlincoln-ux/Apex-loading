@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
 from django.db.models import Count, Avg, Sum
 from django.utils import timezone
 from datetime import timedelta
@@ -42,6 +43,7 @@ class PlatformAnalyticsView(APIView):
 
 class PublicPlatformStatsView(APIView):
     permission_classes = [AllowAny]
+    renderer_classes = [JSONRenderer]
 
     def get(self, request):
         total_jobs = VendorJob.objects.count()
