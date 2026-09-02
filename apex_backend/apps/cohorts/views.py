@@ -253,7 +253,7 @@ class CohortLeaderboardView(APIView):
         attempts = (
             AssessmentAttempt.objects
             .filter(cohort_id=cohort_id, status='graded')
-            .select_related('user__profile')
+            .select_related('user__profile', 'user__trust_score')
             .order_by('-score')[:50]
         )
         data = [
@@ -262,6 +262,7 @@ class CohortLeaderboardView(APIView):
                 'user_id': str(a.user_id),
                 'full_name': getattr(getattr(a.user, 'profile', None), 'full_name', 'N/A'),
                 'score': a.score,
+                'merit_score': getattr(getattr(a.user, 'trust_score', None), 'overall_merit_score', 0),
             }
             for i, a in enumerate(attempts)
         ]

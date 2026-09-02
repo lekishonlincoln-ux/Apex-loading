@@ -30,7 +30,10 @@ export default function CohortLeaderboard({ cohortId }) {
             }}>#{e.rank}</span>
             <span>{e.full_name}</span>
           </div>
-          <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{e.score?.toFixed(1)}%</span>
+          <span style={{ textAlign: 'right' }}>
+            <strong style={{ display: 'block', color: 'var(--color-primary)' }}>{e.score?.toFixed(1)}%</strong>
+            <small style={{ color: 'var(--color-text-muted)' }}>Merit {Number(e.merit_score || 0).toFixed(1)}</small>
+          </span>
         </div>
       ))}
       {entries.length === 0 && <p style={{ color: 'var(--color-text-muted)' }}>No results yet.</p>}
